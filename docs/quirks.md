@@ -22,7 +22,10 @@ Each of these cost at least a day.
   explicitly (swaymsg) when handing the screen between processes. A workspace holds one fullscreen view:
   mapping a fullscreen window clears another's fullscreen on the same workspace.
 - **Mesa**: Debian's Mesa links libLLVM; Mono-based games (FNA) that export their own LLVM symbols crash
-  when EGL loads it. A Panfrost-only Mesa without LLVM avoids it (ROCKNIX's choice).
+  when EGL loads it, and it gives no GLES 1 context. A Panfrost-only Mesa without LLVM, with GLES 1, fixes
+  both (ROCKNIX's choice). plorpOS builds one (Debian's version, 25.0.7, no glvnd, 19 MB) with
+  [mk/build-ports-mesa.sh](https://github.com/thwonp/plorpOS/blob/feat/rotate/mk/build-ports-mesa.sh) into
+  `/usr/lib/plorpos-mesa`, and puts it on `LD_LIBRARY_PATH` for games only; the compositor keeps Debian's.
 - **32-bit userland** is absent on a Debian arm64 rootfs: box86/gmloader (armhf) games need it.
 - **Reboot can hang** after journald stops: for test reboots, sync and hard-reset (Vol-Down+Power).
 - **ramoops works**; Vol-Down+Power wipes it. `panic=10` gives a record and an automatic reboot.
