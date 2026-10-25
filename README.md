@@ -39,4 +39,10 @@ the latest kernel fixes.
 
 ## Licence
 
-Kernel and U-Boot are GPL-2.0 (sources published with the binaries). Docs: TODO (CC-BY-4.0 proposed).
+- **Scripts** (`scripts/`): MIT - [LICENSE](LICENSE). Each file carries an SPDX line.
+- **Docs** (`README.md`, `AGENTS.md`, `docs/`): [CC-BY-4.0](LICENSES/CC-BY-4.0.txt).
+- **Kernel, U-Boot, SPL**: GPL-2.0 (the SPL GPL-2.0-or-later), from their public source branches named in the
+  table above; every release names the exact commits its binaries were built from.
+  `pm_bootcode.bin` is 31 words taken from that GPL U-Boot source.
+- **Vendor firmware**: none in this repository or its releases. `scripts/extract-firmware.sh` reads each
+  unit's own copy off its eMMC.
