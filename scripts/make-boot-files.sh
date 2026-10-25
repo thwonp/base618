@@ -19,7 +19,8 @@
 #                                                           deep sleep needs it
 #
 # FWDIR holds those three under lib/firmware/ (extract-firmware.sh DEST, plus
-# build-pm-bootcode.sh's output). FWDIR "-" makes Image.uimg only: the initrd
+# build-pm-bootcode.sh's output); lib/firmware/boot-logo.ppm goes in too when it
+# is there (make-logo.sh). FWDIR "-" makes Image.uimg only: the initrd
 # holds the unit's own firmware and never goes in a release. KBUILD is the kernel's O= build directory
 # (arch/arm64/boot/Image, usr/gen_init_cpio). Install: both into /boot, and
 # name them in extlinux.conf (kernel /Image.uimg, initrd /initrd-fw.cpio.gz).
@@ -71,6 +72,8 @@ dir /lib/firmware/sprd 0755 0 0
 file /lib/firmware/sprd/pm_bootcode.bin $FW/lib/firmware/sprd/pm_bootcode.bin 0644 0 0
 file /lib/firmware/sprd/pm_sys.bin $FW/lib/firmware/sprd/pm_sys.bin 0644 0 0
 LIST
+[ -f "$FW/lib/firmware/boot-logo.ppm" ] &&
+	echo "file /lib/firmware/boot-logo.ppm $FW/lib/firmware/boot-logo.ppm 0644 0 0" >> "$T/list"
 "$KBUILD/usr/gen_init_cpio" -t "$EPOCH" "$T/list" | gzip -9 -n > "$OUT/initrd-fw.cpio.gz"
 
 ( cd "$OUT" && md5sum Image.uimg initrd-fw.cpio.gz )
