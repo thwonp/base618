@@ -1,6 +1,6 @@
 # base618
 
-**DRAFT - not released.** A base for custom firmware on Unisoc T618 (ums512 / sharkl5pro) handhelds,
+A base for custom firmware on Unisoc T618 (ums512 / sharkl5pro) handhelds,
 starting with the Anbernic RG Rotate: the boot chain, the kernel, and what each part of the hardware
 needs - written down, so a CFW (NextUI, ROCKNIX, your own) can start from working hardware instead of
 re-deriving it. Same idea as BaseOS for the Allwinner H700.
