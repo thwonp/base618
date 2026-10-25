@@ -9,7 +9,7 @@ Read this before touching the device. Every rule here was paid for once.
   On networks that isolate clients, an NCM USB network gadget (configfs) gives ssh over the cable.
 - BootROM download mode (USB 1782:4d00): start the host tool waiting FIRST, then unplug, slide the screen
   open, hold Home/Back (front, between the sticks) and plug in. Vol-Down+Power is a RESET, not power-off.
-- Tool: `spd_dump` (https://github.com/ilyakurdyukov/spreadtrum_flash) with the FDLs from the stock
+- Tool: `spd_dump` (https://github.com/TomKing062/spreadtrum_flash) with the FDLs from the stock
   firmware package (`fdl1 0x5500`, `fdl2 0x9EFFFE00`). Back up a partition before writing it, always.
 
 ## Never
@@ -30,8 +30,8 @@ Read this before touching the device. Every rule here was paid for once.
 
 ## Measure, don't assume
 
-- Suspend current: `rtcwake` + the fuel gauge's `charge_now` delta, 180 s for an A/B, 300 s for a ledger
-  entry, overnight for a milestone. dmesg timestamps stop during suspend - use wall clock.
+- Suspend current: `rtcwake` + the fuel gauge's `charge_now` delta, 180 s for an A/B, 300 s for a number
+  you will keep, overnight for a milestone. dmesg timestamps stop during suspend - use wall clock.
 - PMU sleep counters (regmap debugfs `dummy-syscon@...327e0000`): 0x784 PUB_SYS_DEEP counts every suspend
   once DDR deep works; that is the proof, not the current alone.
 - Keep one living ledger per long hunt: hypotheses, status, evidence, never-do, test log. Check it before

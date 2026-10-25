@@ -35,7 +35,7 @@ dd if=/dev/mmcblk3boot0 bs=1M count=4 | cmp - spl-cm4.img && echo verified
 Power fully off, cold boot (USB unplugged - with it in, power-off stops at the charge screen), and once it
 boots write boot1 the same way.
 
-Over USB from the BootROM, when nothing boots: `spd_dump` (https://github.com/ilyakurdyukov/spreadtrum_flash)
+Over USB from the BootROM, when nothing boots: `spd_dump` (https://github.com/TomKing062/spreadtrum_flash)
 with the FDLs from the stock firmware package (`fdl1 0x5500`, `fdl2 0x9EFFFE00`):
 
 ```sh

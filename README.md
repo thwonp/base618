@@ -12,8 +12,8 @@ Tested on one device only: the RG Rotate (no other T618 handheld was available).
 | Part | Source | Notes |
 |---|---|---|
 | SPL | [thwonp/ums512_spl](https://github.com/thwonp/ums512_spl) branch `plorpos-cm4` | Armbian's SPL with `cm4_sec()` skipped, so Linux can start the CM4 power coprocessor (deep sleep). Flashed once to the eMMC `splloader`. |
-| U-Boot | thwonp/u-boot-ums512 branch `plorpos` | SD p1. Boot logo, hall-aware rotation, 4-bit SD fix. |
-| Kernel | thwonp/linux-mainline-sprd `rotate-fixes` (device build) / `plorpos-fixes` (upstream staging) | mainline 7.2 + Armbian's sprd patches + the fixes in [docs/](docs/). |
+| U-Boot | [thwonp/u-boot-ums512](https://github.com/thwonp/u-boot-ums512) branch `plorpos` | SD p1. Boot logo, hall-aware rotation, 4-bit SD fix. |
+| Kernel | [thwonp/linux-mainline-sprd](https://github.com/thwonp/linux-mainline-sprd) `rotate-fixes` (device build) / `plorpos-fixes` (upstream staging) | mainline 7.2 + Armbian's sprd patches + the fixes in [docs/](docs/). |
 | Firmware | the device's own eMMC | Never shipped. A first-boot script copies AGDSP, pm_sys (CM4) and the WCN modem firmware from the stock partitions. See [docs/firmware.md](docs/firmware.md). |
 | Root filesystem | not ours | Armbian trixie (community anbernic-rg-rotate) is what plorpOS uses. |
 
@@ -33,9 +33,13 @@ and the firmware comes from it. Never wipe eMMC partitions other than `splloader
 
 ## Status
 
-Everything here runs plorpOS on the RG Rotate (seq 108-143 of its development). Open: release packaging,
-redistribution terms (none of the vendor blobs are shipped, by design), install guide, the boot test of
-the latest kernel fixes.
+Everything here runs [plorpOS](https://github.com/thwonp/plorpOS) on the RG Rotate day to day: display and
+rotation, touch, buttons, audio (speaker, headphones, mic, USB DACs, Bluetooth), Wi-Fi, charging and USB
+host, and deep sleep at 3.3 mA. Known gaps:
+
+- Mic capture held open across a suspend stops; the next open works.
+- Asleep, 0.75 mA above stock: the USB2 PHY is never powered off (up to 0.3 mA), the rest unexplained.
+- One unit tested. Nothing here has been tried on another T618 device.
 
 ## Licence
 

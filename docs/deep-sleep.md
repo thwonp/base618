@@ -1,6 +1,6 @@
 # Deep sleep on the T618: 35.7 mA -> 3.3 mA (stock 2.55 mA)
 
-The long version is plorpOS's `.74` ledger. This is what a new port needs.
+What a new port needs, from the plorpOS investigation that got the RG Rotate there.
 
 ## Why mainline does not sleep out of the box
 

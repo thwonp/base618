@@ -14,8 +14,8 @@ BootROM -> SPL (eMMC splloader, ours) -> ATF + TrustOS (eMMC, stock) -> U-Boot (
 - **U-Boot** on SD p1 (DHTB-wrapped image): boot logo held until the compositor, hall-aware rotation, SD bus
   in 4-bit mode (the vendor tree's MMC_MODE_HS bits overlap 4BIT/8BIT), kernel at 0x9a200000 with a 64 MB
   BOOTM_LEN for a gzip uImage. With USB power in, power-off lands on U-Boot's charge screen (it lives in RAM).
-- **Linux**: gzip uImage + DTB + a firmware-only initrd (`/lib/firmware/sprd/pm_bootcode.bin`, AGDSP image),
-  extlinux on p2; rootfs ext4 on p3; data (exFAT) on p4.
+- **Linux**: gzip uImage + DTB + a firmware-only initrd (AGDSP, `pm_bootcode.bin` and pm_sys; no `/init`),
+  extlinux on p2 (FAT, GPT name `bootfs`); rootfs ext4 on p3. plorpOS adds an exFAT data partition, p4.
 
 Boot time on plorpOS: power to frontend ~15 s; kernel ~2 s after the clk probe fix (the ums512 clock
 probes power-cycled their PMU domain for each clock with msleep(50) both ways; holding a runtime-PM ref

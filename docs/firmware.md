@@ -6,11 +6,17 @@ Three Unisoc images are needed, and all three are on every RG Rotate's eMMC (A/B
 |---|---|---|---|---|---|
 | AGDSP (audio DSP) | `l_agdsp_a` / `_b` | 5 MiB | starts with `SharkL5_AUDCP_` | initrd `/lib/firmware/updates/agdsp.bin` | built-in audio driver, before the rootfs mounts |
 | pm_sys (CM4 power firmware) | `pm_sys_a` / `_b` | 1 MiB | magic `df f8 0c d0` | initrd `/lib/firmware/sprd/pm_sys.bin` **and** the rootfs (the firmware cache re-reads it at suspend) | sprd_pmsys remoteproc |
-| WCN (Wi-Fi/BT modem) | Armbian's `rotate-extract-firmware` | - | magic `a0 0a 1a 00` | rootfs `/lib/firmware/updates/wcnmodem.bin` | sprd_wcn |
+| WCN (Wi-Fi/BT modem) | `wcnmodem_a` / `_b` | 947200 (the driver's window, 0xe7400) | magic `a0 0a 1a 00` | rootfs `/lib/firmware/updates/wcnmodem.bin` | sprd_wcn |
 
-Plus `pm_bootcode.bin` (the CM4's boot stub), built from source and shipped (plorpOS: `mk/rotate-pm-bootcode.sh`).
+Plus `pm_bootcode.bin` (the CM4's boot stub), built from GPL source and shipped (`scripts/build-pm-bootcode.sh`).
 
-## The first boot (plorpOS's `plorpos-firmware.sh`, after Armbian's extractor)
+## Doing it
+
+`scripts/extract-firmware.sh [DEST]` takes all three (slot a, else b, each checked), and
+`scripts/make-initrd-fw.sh` builds the initrd on the device - see [install.md](install.md). Armbian's own
+`rotate-extract-firmware` service already takes the WCN and AGDSP images on its first boot.
+
+## A first-boot service, as plorpOS does it (`plorpos-firmware.sh`, after Armbian's extractor)
 
 1. Slot a, else b: `dd` the partition head, check the magic.
 2. Build `/boot/initrd-fw.cpio.gz` = dev/console + the three files above; pm_sys into the rootfs too.
