@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: MIT
+# make-card.sh installs this enabled; see base618-firstboot.sh.
+[Unit]
+Description=base618 first boot: this unit's firmware, then power off
+After=local-fs.target rotate-extract-firmware.service
+ConditionPathExists=!/boot/base618-fw.done
+ConditionPathExists=!/boot/base618-fw.failed
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh /usr/share/base618/firstboot.sh
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target

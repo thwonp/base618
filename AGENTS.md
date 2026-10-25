@@ -41,6 +41,7 @@ Read this before touching the device. Every rule here was paid for once.
 
 - Kernel: cross build in a container (aarch64-linux-gnu), `O=` an out-of-tree build dir that reproduces the
   device kernel; boot files = gzip uImage + DTB + a firmware-only initrd (AGDSP/pm_sys bootcode).
+- A whole card: `scripts/make-card.sh ARMBIAN_IMG OUT` (rootless: mtools + debugfs on the image file).
 - Keep each fix a separate commit, so a bad one can be dropped after a boot test.
 - Boot a test kernel with the stock extlinux entry kept as the fallback; with the USB cable in, a power-off
   lands on U-Boot's charge screen (hold Power), so cold-boot tests are done unplugged.
