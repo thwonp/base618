@@ -1,4 +1,4 @@
-# Deep sleep on the T618: 35.7 mA -> 3.3 mA (stock 2.55 mA)
+# Deep sleep on the T618: 35.7 mA -> 3.3 mA, within 29 % of stock
 
 What a new port needs, from the plorpOS investigation that got the RG Rotate there.
 
@@ -30,7 +30,8 @@ What a new port needs, from the plorpOS investigation that got the RG Rotate the
    it; it stays associated otherwise, ~60 mA), Bluetooth (off at sleep), the panel (output off), an open PCM.
 
 Measured on plorpOS: 149 mA (panel + Wi-Fi on) -> 41 -> 29 (PUB deep) -> 14 (XO low) -> 4.1 -> 3.30 mA overnight
-(~2 %/12 h on 1900 mAh). Left vs stock: USB2 PHY never powered off (<= 0.3 mA), ~0.6 mA unexplained.
+(~2 %/12 h on 1900 mAh) - within 0.75 mA (29 %) of stock Android's 2.55 mA on the same unit, from a mainline
+kernel that drew 35.7 mA asleep out of the box.
 
 ## What did NOT matter
 
