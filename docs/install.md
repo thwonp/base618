@@ -110,6 +110,10 @@ label base618
   append root=PARTUUID=<p3> rootwait console=tty0 ro
 ```
 
+`root=PARTUUID=`, not `UUID=`: with no `/init` the kernel mounts root itself, and it only understands
+PARTUUID. A card image that writes a fresh partition table must give p3 the PARTUUID its extlinux names, or
+the kernel waits at the logo for ever (`rootwait`).
+
 Keep Armbian's entry as a second label, or a copy of the file (`extlinux.conf.stock`) to restore from a card
 reader.
 
