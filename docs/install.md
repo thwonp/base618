@@ -62,9 +62,16 @@ dd if=uboot_dhtb.img of=/dev/disk/by-partlabel/uboot bs=512 conv=fsync
 
 (on a PC card reader, the card's first partition). What it adds over Armbian's: the boot logo held through the
 kernel handoff, rotation from the hall sensor, a 4-bit SD bus, and a kernel load address and gunzip limit
-that fit a gzip uImage (needed for `Image.uimg`). Build it yourself: `ums512_rg_rotate_defconfig`, `ARCH=arm`,
-`CROSS_COMPILE=aarch64-linux-gnu-`, then wrap with the DHTB header (Armbian's `uboot_custom_postprocess`:
-512-byte header, `DHTB`, version 1, SHA-256 of the 512-padded payload at 0x08, its length at 0x30).
+that fit a gzip uImage (needed for `Image.uimg`). Build it yourself (Debian trixie, `gcc-aarch64-linux-gnu` 14):
+
+```sh
+make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- O=out ums512_rg_rotate_defconfig
+make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- O=out DEVICE_TREE=ums512_rg_rotate -j8
+```
+
+then wrap `out/u-boot-dtb.bin` in the DHTB header (Armbian's `uboot_custom_postprocess`: 512-byte header,
+`DHTB`, version 1, SHA-256 of the 512-padded payload at 0x08, its length at 0x30). The SPL builds the same
+way from its tree: `CROSS_COMPILE=aarch64-linux-gnu- ./build.sh open` gives `out/open/spl_a_open.img`.
 
 ## 3. Kernel and DTB (SD p2)
 
