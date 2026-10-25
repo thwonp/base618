@@ -69,7 +69,7 @@ make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- O=out ums512_rg_rotate_defconfig
 make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- O=out DEVICE_TREE=ums512_rg_rotate -j8
 ```
 
-then wrap `out/u-boot-dtb.bin` in the DHTB header (Armbian's `uboot_custom_postprocess`: 512-byte header,
+then `scripts/dhtb-wrap.py out/u-boot-dtb.bin uboot_dhtb.img` wraps it in the DHTB header (Armbian's `uboot_custom_postprocess`: 512-byte header,
 `DHTB`, version 1, SHA-256 of the 512-padded payload at 0x08, its length at 0x30). The SPL builds the same
 way from its tree: `CROSS_COMPILE=aarch64-linux-gnu- ./build.sh open` gives `out/open/spl_a_open.img`.
 
