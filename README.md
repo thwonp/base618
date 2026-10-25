@@ -28,6 +28,7 @@ and the firmware comes from it. Never wipe eMMC partitions other than `splloader
 - [docs/deep-sleep.md](docs/deep-sleep.md) - from 35.7 mA to 3.3 mA asleep (stock 2.55 mA).
 - [docs/quirks.md](docs/quirks.md) - things that cost us a day each.
 - [docs/firmware.md](docs/firmware.md) - extracting the vendor firmware from the user's own device.
+- [docs/install.md](docs/install.md) - putting each part on a unit, checking it, and getting back.
 - [docs/coming-from-h700.md](docs/coming-from-h700.md), [docs/coming-from-a133p.md](docs/coming-from-a133p.md).
 
 ## Status
