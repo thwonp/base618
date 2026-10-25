@@ -19,18 +19,21 @@
 #                                                           deep sleep needs it
 #
 # FWDIR holds those three under lib/firmware/ (extract-firmware.sh DEST, plus
-# build-pm-bootcode.sh's output). KBUILD is the kernel's O= build directory
+# build-pm-bootcode.sh's output). FWDIR "-" makes Image.uimg only: the initrd
+# holds the unit's own firmware and never goes in a release. KBUILD is the kernel's O= build directory
 # (arch/arm64/boot/Image, usr/gen_init_cpio). Install: both into /boot, and
 # name them in extlinux.conf (kernel /Image.uimg, initrd /initrd-fw.cpio.gz).
 set -eu
 KBUILD=$(cd "${1:?usage: make-boot-files.sh KBUILD FWDIR [OUT]}" && pwd)
-FW=$(cd "${2:?usage: make-boot-files.sh KBUILD FWDIR [OUT]}" && pwd)
+FW=${2:?usage: make-boot-files.sh KBUILD FWDIR [OUT]}
+[ "$FW" = - ] || FW=$(cd "$FW" && pwd)
 OUT=${3:-boot}
 MKIMAGE=${MKIMAGE:-mkimage}
 IMG=$KBUILD/arch/arm64/boot/Image
-for f in "$IMG" "$KBUILD/usr/gen_init_cpio" \
-	"$FW/lib/firmware/updates/agdsp.bin" "$FW/lib/firmware/sprd/pm_bootcode.bin" \
-	"$FW/lib/firmware/sprd/pm_sys.bin"; do
+NEED="$IMG"
+[ "$FW" = - ] || NEED="$NEED $KBUILD/usr/gen_init_cpio $FW/lib/firmware/updates/agdsp.bin
+	$FW/lib/firmware/sprd/pm_bootcode.bin $FW/lib/firmware/sprd/pm_sys.bin"
+for f in $NEED; do
 	[ -e "$f" ] || { echo "missing $f" >&2; exit 1; }
 done
 command -v "$MKIMAGE" > /dev/null || { echo "no mkimage ($MKIMAGE)" >&2; exit 1; }
@@ -54,6 +57,8 @@ with open(p, 'r+b') as f:
     h[4:8] = struct.pack('>I', zlib.crc32(h) & 0xffffffff)
     f.seek(0); f.write(h)
 PY
+
+[ "$FW" = - ] && { ( cd "$OUT" && md5sum Image.uimg ); exit 0; }
 
 cat > "$T/list" <<LIST
 dir /dev 0755 0 0
