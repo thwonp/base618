@@ -5,12 +5,13 @@ open = the panel's own orientation, closed = turned 90 degrees, read from the ha
 
 | When | Drawn by | Source | Change it by |
 |---|---|---|---|
-| U-Boot start to kernel handoff | U-Boot, into the panel's framebuffer, then held on black through the handoff | `board/spreadtrum/ums512_1h10/plorpos_logo.{c,h}` in thwonp/u-boot-ums512 | regenerating `plorpos_logo.h` with `mklogo.py` and rebuilding U-Boot |
+| U-Boot start to kernel handoff | U-Boot: "Booting", into the panel's framebuffer, then held on black through the handoff | `board/spreadtrum/ums512_1h10/plorpos_logo.{c,h}` in thwonp/u-boot-ums512 | regenerating `plorpos_logo.h` with `mklogo.py` and rebuilding U-Boot |
 | kernel handoff to frontend | fbcon, centred on a quiet console | `boot-logo.ppm` in the firmware initrd if there is one, else the built-in `logo_plorpos_clut224.ppm` | one file and an initrd rebuild on the device, no kernel build - below |
 
 ## U-Boot's logo
 
-An 8-bit coverage map, run-length coded (a nonzero byte is one pixel, `00 n` is n empty ones), two colours
+"Booting" in the plorpOS purple (`#8a5cd6`), Fredoka 132 pt, centred on black - the same for every system
+built on this base; the kernel's logo after it is the one to make your own. An 8-bit coverage map, run-length coded (a nonzero byte is one pixel, `00 n` is n empty ones), two colours
 split at a column. `mklogo.py`'s header has the recipe (ImageMagick from a font, `gray:` raw out):
 
 ```sh
