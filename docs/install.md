@@ -75,7 +75,18 @@ SUBSYSTEM=="usb", ATTR{idVendor}=="1782", ATTR{idProduct}=="4d00", MODE="0666", 
 
 ### From a Windows PC - untested by us
 
-GammaOS's tools, used the way its wiki's "Super only" recovery uses them. From
+With beebono's `spl-flasher.zip` (above): unzip it, copy `spl-cm4.img` into its `spl-flasher` folder, open a
+command prompt there and run its `spd_dump.exe`, writing boot0 only:
+
+```bat
+spd_dump.exe --wait 300 keep_charge 1 fdl fdl1-dl.bin 0x5500 fdl fdl2-dl.bin 0x9EFFFE00 exec write_part splloader spl-cm4.img poweroff
+```
+
+Then unplug the unit, power it off, slide the screen open, hold Home/Back and plug it in. Use this rather than
+the zip's own `flash-spl.bat`, which writes both `splloader` and `splloader_bak`. There is no backup on this
+path; `splloader_bak` still holds the unit's own SPL.
+
+Or GammaOS's tools, used the way its wiki's "Super only" recovery uses them. From
 [GammaOS's install page](https://github.com/TheGammaSqueeze/GammaOSNext/wiki/GammaOS-Next-Installation): get
 `UnisocTools_RG_ROTATE.zip` (install its drivers, `UnisocDrivers/DPInst64.exe`). This path needs a whole `.pac`:
 the stock firmware or GammaOS's (GammaOS's is for its Patreon supporters).
@@ -93,7 +104,7 @@ There is no backup on this path; the `.pac`'s own SPLLoader puts the original ba
 - adb: `adb push splloader.bin /data/local/tmp/` (from the pulled backup), then
   `adb shell sh /data/local/tmp/flash-spl-android.sh /data/local/tmp/splloader.bin`.
 - Linux: `./flash-spl.sh path/to/spl-flasher splloader-backup-<date>.bin` (or `YOUR.pac` in place of the folder).
-- Windows: as above, leaving SPLLoader's file as the `.pac`'s.
+- Windows: with a `.pac`, as above, leaving SPLLoader's file as the `.pac`'s.
 
 What we tested: `flash-spl.sh` on our dev unit (stock `.pac` v1.44 loaders, backup, write, readback);
 `flash-spl-android.sh` on a GammaOS Next Lite unit (Android 14), after which it booted GammaOS with no card
