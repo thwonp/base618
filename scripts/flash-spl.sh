@@ -23,7 +23,7 @@ say() { echo "flash-spl: $*"; }
 die() { echo "flash-spl: $*" >&2; exit 1; }
 command -v "$SPD" > /dev/null || die "need spd_dump (or SPD_DUMP=path)"
 [ -f "$SPL" ] || die "no $SPL (give the SPL image as the second argument)"
-[ "$(stat -c %s "$SPL")" -eq 4194304 ] || die "$SPL is not a 4 MiB SPL image"
+[ "$(stat -c %s "$SPL")" -le 4194304 ] || die "$SPL is larger than the 4 MiB slot"
 python3 "$HERE/check-dhtb.py" "$SPL" > /dev/null || die "$SPL fails its DHTB check"
 T=$(mktemp -d "${TMPDIR:-/var/tmp}/flash-spl.XXXXXX")
 trap 'rm -rf "$T"' EXIT
@@ -32,12 +32,22 @@ BAK=splloader-backup-$(date +%Y%m%d-%H%M%S).bin
 [ -e "$BAK" ] && die "$BAK exists"
 
 say "now: unplug the unit, power it off, slide the screen open, hold Home/Back and plug it in"
-"$SPD" --wait 300 keep_charge 1 fdl "$T/fdl1.bin" 0x5500 fdl "$T/fdl2.bin" 0x9EFFFE00 exec \
-	read_part splloader 0 0x400000 "$BAK" \
-	write_part splloader "$SPL" \
-	read_part splloader 0 0x400000 "$T/check.bin" \
-	poweroff || die "spd_dump failed - nothing is verified; run it again"
-[ -s "$BAK" ] || die "no backup was read; the slot may not have been written"
-cmp -s "$T/check.bin" "$SPL" || die "readback differs from $SPL - run it again before booting (old SPL: $BAK)"
-say "verified; old SPL kept in $BAK"
+say "then keep it plugged in until this says verified - about a minute; the screen stays dark"
+# spd_dump saves what it reads (and the unit's partition table) into its working
+# directory, so it runs in $T; a read of splloader comes
+# back trimmed to the DHTB image (the rest of the slot is zeros), so the readback is
+# padded to 4 MiB and compared with the SPL padded the same way. The readback, not
+# spd_dump's exit status, decides: on some ports the link drops after the write.
+SPLA=$(cd "$(dirname "$SPL")" && pwd)/$(basename "$SPL")
+( cd "$T" && "$SPD" --wait 300 keep_charge 1 fdl fdl1.bin 0x5500 fdl fdl2.bin 0x9EFFFE00 exec \
+	read_part splloader 0 0x400000 backup.bin \
+	write_part splloader "$SPLA" \
+	read_part splloader 0 0x400000 check.bin \
+	poweroff ) || say "spd_dump stopped early; checking what it read back"
+[ -s "$T/backup.bin" ] && cp "$T/backup.bin" "$BAK"
+[ -s "$T/check.bin" ] || die "no readback: the slot may or may not have been written - run it again"
+pad() { cp "$1" "$2"; truncate -s 4194304 "$2"; }
+pad "$T/check.bin" "$T/check.4m"; pad "$SPL" "$T/spl.4m"
+cmp -s "$T/check.4m" "$T/spl.4m" || die "readback differs from $SPL - run it again before booting"
+if [ -s "$BAK" ]; then say "verified; old SPL kept in $BAK"; else say "verified (no backup was read this time)"; fi
 say "unplug, put in a base618 card and power on"
