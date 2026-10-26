@@ -89,6 +89,7 @@ host, and deep sleep at 3.3 mA - within 29 % of stock Android. Known gaps:
 - **Kernel, U-Boot, SPL**: GPL-2.0 (the SPL GPL-2.0-or-later), from their public source branches named in the
   table above; every release names the exact commits its binaries were built from.
   `pm_bootcode.bin` is 31 words taken from that GPL U-Boot source.
+- **Fonts** (`res/lato*.ttf`, the logo and screen): Lato, [SIL OFL 1.1](res/OFL-Lato.txt).
 - **Vendor firmware**: none taken from a device, in this repository or its releases. `scripts/extract-firmware.sh`
   reads each unit's own copy (AGDSP, pm_sys, the WCN modem image) off its eMMC at first boot. The card image and
   the copy of Armbian's image carry Armbian's `armbian-firmware` package as Armbian ships it.
