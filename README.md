@@ -68,8 +68,8 @@ and the firmware comes from it. Never wipe eMMC partitions other than `splloader
 - [docs/deep-sleep.md](docs/deep-sleep.md) - from 35.7 mA to 3.3 mA asleep, within 29 % of stock.
 - [docs/quirks.md](docs/quirks.md) - things that cost us a day each.
 - [docs/firmware.md](docs/firmware.md) - extracting the vendor firmware from the user's own device.
-- [docs/install.md](docs/install.md) - putting each part on a unit, checking it, and getting back; or one
-  command, `scripts/make-card.sh`, from Armbian's image to a bootable card.
+- [docs/install.md](docs/install.md) - putting each part on a unit, checking it, and getting back; or the
+  release's ready card image, or `scripts/make-card.sh` to make one from Armbian's image.
 - [docs/boot-logo.md](docs/boot-logo.md) - the two boot logos and how to change them.
 - [docs/coming-from-h700.md](docs/coming-from-h700.md), [docs/coming-from-a133p.md](docs/coming-from-a133p.md).
 
@@ -89,5 +89,6 @@ host, and deep sleep at 3.3 mA - within 29 % of stock Android. Known gaps:
 - **Kernel, U-Boot, SPL**: GPL-2.0 (the SPL GPL-2.0-or-later), from their public source branches named in the
   table above; every release names the exact commits its binaries were built from.
   `pm_bootcode.bin` is 31 words taken from that GPL U-Boot source.
-- **Vendor firmware**: none in this repository or its releases. `scripts/extract-firmware.sh` reads each
-  unit's own copy off its eMMC.
+- **Vendor firmware**: none taken from a device, in this repository or its releases. `scripts/extract-firmware.sh`
+  reads each unit's own copy (AGDSP, pm_sys, the WCN modem image) off its eMMC at first boot. The card image and
+  the copy of Armbian's image carry Armbian's `armbian-firmware` package as Armbian ships it.

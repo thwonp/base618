@@ -4,15 +4,15 @@
 # root: the boot partition is edited with mtools, the rootfs with debugfs, and
 # nothing of Armbian's is repacked or rebuilt.
 #
-#   scripts/make-card.sh ARMBIAN_IMG OUT
+#   scripts/make-card.sh FILES_DIR OUT
 #
-#   ARMBIAN_IMG  Armbian_community_26.11.0-trunk.95_Anbernic-rg-rotate_trixie_edge_7.2.9_minimal.img(.xz)
-#                - the image base618 was tested on; the base618 release carries a copy.
-#                Another one is refused (its kernel modules may not match ours); FORCE=1
-#                takes it anyway, with a warning.
-#   ASSETS=DIR   base618's release files (uboot_dhtb.img, Image.uimg, ums512-rg-rotate.dtb,
-#                modules-updates-*.tar.gz, pm_bootcode.bin, SHA256SUMS). Default: downloaded
-#                from the release below and checked against its SHA256SUMS.
+#   FILES_DIR    the release's base618-v<version>-files.zip, unzipped: base618's files
+#                (uboot_dhtb.img, Image.uimg, ums512-rg-rotate.dtb, modules-updates-*.tar.gz,
+#                pm_bootcode.bin), Armbian's image and SHA256SUMS, which they are checked against.
+#   ARMBIAN_IMG  another Armbian image in place of the one in FILES_DIR,
+#                Armbian_community_26.11.0-trunk.95_Anbernic-rg-rotate_trixie_edge_7.2.9_minimal.img(.xz),
+#                the one base618 was tested on. Another one is refused (its kernel modules may
+#                not match ours); FORCE=1 takes it anyway, with a warning.
 #   ROOT_PASSWORD  the card's root password (default base618). Armbian's first-login
 #                wizard is turned off; ssh stays as Armbian ships it.
 #
@@ -29,14 +29,14 @@
 #              root's password; no first-login wizard
 #
 # Needs: sfdisk, mtools, debugfs + e2fsck (e2fsprogs >= 1.46), python3, openssl, xz,
-# sha256sum, and curl when ASSETS is not given. Space: about twice the image (2.2 GB).
+# sha256sum. Space: about twice the image (2.2 GB).
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
-IN=${1:?usage: make-card.sh ARMBIAN_IMG OUT}
-OUT=${2:?usage: make-card.sh ARMBIAN_IMG OUT}
+ASSETS=${1:?usage: make-card.sh FILES_DIR OUT}
+OUT=${2:?usage: make-card.sh FILES_DIR OUT}
 ROOT_PASSWORD=${ROOT_PASSWORD:-base618}
-RELEASE=https://github.com/thwonp/base618/releases/download/v0.1
 KREL=7.2.9-edge-sprd-ums512
+IN=${ARMBIAN_IMG:-$ASSETS/Armbian_community_26.11.0-trunk.95_Anbernic-rg-rotate_trixie_edge_7.2.9_minimal.img.xz}
 # trunk.95 as Armbian published it, compressed and not.
 SHA_XZ=94471b9625c146e6f02de6c550d1b763dc660686572a7754b57363c2e4148ac5
 SHA_RAW=e8679eec6e469c12ab8df46a0d4ba8d5c387d62cd56daa1eb3bd62b8db933402
@@ -49,7 +49,8 @@ done
 T=$(mktemp -d "${TMPDIR:-/var/tmp}/make-card.XXXXXX")
 trap 'rm -rf "$T"' EXIT
 
-# 1. Armbian's image, as published - checked first, before any download.
+# 1. Armbian's image, as published.
+[ -f "$IN" ] || die "no $IN"
 case $IN in
 *.xz) WANT=$SHA_XZ ;;
 *)    WANT=$SHA_RAW ;;
@@ -60,14 +61,6 @@ if [ "$GOT" != "$WANT" ]; then
 	say "WARNING: not the tested Armbian image - its kernel modules may not load with base618's kernel"
 fi
 # 2. The base618 parts.
-if [ -z "${ASSETS:-}" ]; then
-	command -v curl > /dev/null || die "need curl, or ASSETS=DIR"
-	ASSETS=$T/assets; mkdir -p "$ASSETS"
-	for f in SHA256SUMS uboot_dhtb.img Image.uimg ums512-rg-rotate.dtb \
-	         modules-updates-$KREL.tar.gz pm_bootcode.bin; do
-		curl -sSfL -o "$ASSETS/$f" "$RELEASE/$f" || die "could not download $f"
-	done
-fi
 ( cd "$ASSETS" && sha256sum -c --ignore-missing --quiet SHA256SUMS ) || die "$ASSETS does not match its SHA256SUMS"
 for f in uboot_dhtb.img Image.uimg ums512-rg-rotate.dtb modules-updates-$KREL.tar.gz pm_bootcode.bin; do
 	[ -s "$ASSETS/$f" ] || die "no $ASSETS/$f"

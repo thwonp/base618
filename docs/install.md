@@ -17,17 +17,19 @@ Never wipe eMMC partitions other than the two SPL slots - see [boot-chain.md](bo
 
 ## Quick path: a card from Armbian's image
 
-After the SPL (step 1, once per unit), steps 2-5 are one command on a Linux PC, no root needed:
+After the SPL (step 1, once per unit), steps 2-5 are done for you: the release's `base618-card.img.xz` is
+a card made this way. To make one yourself, unzip the release's `base618-v<version>-files.zip` and run one
+command on a Linux PC, no root needed:
 
 ```sh
-scripts/make-card.sh Armbian_community_26.11.0-trunk.95_Anbernic-rg-rotate_trixie_edge_7.2.9_minimal.img.xz base618.img
+scripts/make-card.sh base618-v0.2-files base618.img
 ```
 
-It takes Armbian's image (the one base618 is tested on - the release carries a copy), puts base618's U-Boot,
+It takes Armbian's image (the one base618 is tested on - the zip carries a copy), puts base618's U-Boot,
 kernel, DTB and updated modules on it, boots `root=PARTUUID=` of p3 (Armbian's entry stays as a second label)
 and adds a first-boot service that builds the firmware initrd from the unit's own eMMC and powers off once.
-Login `root` / `base618` (`ROOT_PASSWORD=...` to choose another). The release also has a card image made this
-way. Write either to a card with `dd`, boot, wait for the power-off, boot again, then step 6. The steps below are
+Login `root` / `base618` (`ROOT_PASSWORD=...` to choose another). Write
+the image to a card with `dd`, boot, wait for the power-off, boot again, then step 6. The steps below are
 what it does, for doing them by hand.
 
 ## 1. The SPL (once per unit)
