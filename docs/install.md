@@ -2,12 +2,12 @@
 
 Four parts, each replaceable on its own. Start from Armbian's community image for the RG Rotate
 (`anbernic-rg-rotate`, family `sprd-ums512`): it gives the card layout and a rootfs, and its card carries
-`/boot/README.flash-bootloader-first.txt`, the reference for the SPL step. base618 changes the SPL, U-Boot
+`/boot/README.flash-bootloader-first.txt`, Armbian's own SPL guide. base618 changes the SPL, U-Boot
 and the kernel, and builds a firmware initrd from the unit's own eMMC.
 
 | Part | Lives on | From |
 |---|---|---|
-| SPL | eMMC `splloader` (boot0) + `splloader_bak` (boot1), 4 MiB each | release `spl-cm4.img` (thwonp/ums512_spl `plorpos-cm4`) |
+| SPL | eMMC `splloader` (boot0), 4 MiB; `splloader_bak` (boot1) keeps the unit's own | release `spl-cm4.img` (thwonp/ums512_spl `plorpos-cm4`) |
 | U-Boot | SD p1, GPT name `uboot` (16 MiB raw) | release `uboot_dhtb.img` (thwonp/u-boot-ums512 `plorpos`) |
 | Kernel + DTB | SD p2 `bootfs` (FAT): `/Image.uimg`, `/dtb/sprd/ums512-rg-rotate.dtb` | release, or `scripts/make-boot-files.sh` |
 | Firmware initrd | SD p2: `/initrd-fw.cpio.gz` | built on the device: `scripts/extract-firmware.sh` + `scripts/make-initrd-fw.sh` |
@@ -34,40 +34,68 @@ what it does, for doing them by hand.
 
 ## 1. The SPL (once per unit)
 
-Do Armbian's SPL step first, exactly as its README says: check the DHTB hash (`scripts/check-dhtb.py`), back up both slots, write
-boot0, cold boot, then boot1. base618's SPL is Armbian's with one call skipped (`cm4_sec()`, which locks the
-CM4 power controller), so the same procedure applies; use `spl-cm4.img` in place of `<image>.spl.img`.
+base618's SPL is Armbian's with one call skipped (`cm4_sec()`, which locks the CM4 power controller). It goes
+into the eMMC's `splloader` slot (boot0) and nothing else: `splloader_bak` (boot1) keeps what the unit had, so
+if boot0 ever fails its check the BootROM falls back to it. With no base618 card in, base618's SPL boots the
+eMMC's Android (stock or GammaOS) as before. Everything below is in the release's `base618-v<version>-spl.zip`.
+Pick one way:
 
-From a running system (Armbian on the card), as root - **find the eMMC first**, it is the `mmcblkN` whose
-`device/type` is `MMC` (mmcblk3 on our unit):
+### On GammaOS - any PC with adb (Windows, macOS, Linux)
 
-```sh
-dd if=/dev/mmcblk3boot0 of=stock_boot0.bak bs=1M      # keep both off the device
-dd if=/dev/mmcblk3boot1 of=stock_boot1.bak bs=1M
-echo 0 > /sys/block/mmcblk3boot0/force_ro
-dd if=spl-cm4.img of=/dev/mmcblk3boot0 bs=1M conv=fsync
-dd if=/dev/mmcblk3boot0 bs=1M count=4 | cmp - spl-cm4.img && echo verified
-```
-
-Power fully off, cold boot (USB unplugged - with it in, power-off stops at the charge screen), and once it
-boots write boot1 the same way.
-
-Over USB from the BootROM, when nothing boots: `spd_dump` (https://github.com/TomKing062/spreadtrum_flash)
-with the FDLs from the stock firmware package (`fdl1 0x5500`, `fdl2 0x9EFFFE00`):
+With the unit running GammaOS (or any rooted Android) and USB debugging on:
 
 ```sh
-spd_dump --wait 300 keep_charge 1 fdl fdl1-dl.bin 0x5500 fdl fdl2-dl.bin 0x9EFFFE00 exec \
-  read_part splloader 0 0x400000 stock_boot0.bak \
-  write_part splloader spl-cm4.img \
-  read_part splloader 0 0x400000 check.bin poweroff
+adb root
+adb push spl-cm4.img flash-spl-android.sh /data/local/tmp/
+adb shell sh /data/local/tmp/flash-spl-android.sh
+adb pull /sdcard/base618-spl-backup
 ```
 
-Start the tool first, then enter download mode. On our unit: unplug, slide the screen open, hold Home/Back
-(front, between the sticks) and plug in. Armbian's README describes a small tact switch on the mainboard
-instead; either way the host must show `1782:4d00`. Vol-Down+Power is a reset, not power-off.
+It saves both old slots to `/sdcard/base618-spl-backup/`, writes boot0 and checks a readback. Keep the pulled
+backup. Power off, put in a base618 card, power on.
 
-What we tested: the USB path, `splloader` only, with readback. The running-system path is Armbian's and
-untested by us.
+### From a Linux PC over USB - whatever the unit runs, or if it boots nothing
+
+Needs [spd_dump](https://github.com/TomKing062/spreadtrum_flash) (`make`, then on `PATH`) and a Unisoc `.pac`
+for the RG Rotate - the stock firmware or GammaOS's (both linked from
+[GammaOS's install page](https://github.com/TheGammaSqueeze/GammaOSNext/wiki/GammaOS-Next-Installation)).
+Only its two download-mode loaders are used; nothing else in it is written.
+
+```sh
+./flash-spl.sh YOUR.pac
+```
+
+Then: unplug the unit, power it off, slide the screen open, hold Home/Back (front, between the sticks) and plug
+it in. The old SPL is kept as `splloader-backup-<date>.bin`. USB access to `1782:4d00` needs sudo or a udev rule:
+
+```
+SUBSYSTEM=="usb", ATTR{idVendor}=="1782", ATTR{idProduct}=="4d00", MODE="0666", TAG+="uaccess"
+```
+
+### From a Windows PC - untested by us
+
+GammaOS's tools, used the way its wiki's "Super only" recovery uses them. From
+[GammaOS's install page](https://github.com/TheGammaSqueeze/GammaOSNext/wiki/GammaOS-Next-Installation): get
+`UnisocTools_RG_ROTATE.zip` (install its drivers, `UnisocDrivers/DPInst64.exe`) and the stock or GammaOS `.pac`.
+
+1. Run `ResearchDownload.exe`, **Load Packet**, pick the `.pac`.
+2. Gear icon, Main Page: untick **Select All Files**, tick only **FDL**, **FDL2** and **SPLLoader**; set
+   SPLLoader's file to `spl-cm4.img`. OK.
+3. **Play**, then unplug the unit, power it off, slide the screen open, hold Home/Back and plug it in.
+4. Wait for **Passed**, unplug, put in a base618 card, power on.
+
+There is no backup on this path; the `.pac`'s own SPLLoader puts the original back.
+
+### Undo
+
+- adb: `adb push splloader.bin /data/local/tmp/` (from the pulled backup), then
+  `adb shell sh /data/local/tmp/flash-spl-android.sh /data/local/tmp/splloader.bin`.
+- Linux: `./flash-spl.sh YOUR.pac splloader-backup-<date>.bin`.
+- Windows: as above, leaving SPLLoader's file as the `.pac`'s.
+
+What we tested: the USB write of `splloader` with readback, by hand with the same `spd_dump` commands
+`flash-spl.sh` runs. The adb path and the scripts themselves are not yet tested on a unit; the Windows path
+is not tested.
 
 ## 2. U-Boot (SD p1)
 
@@ -147,5 +175,5 @@ about 3.3 mA on our unit with the CM4 running ([deep-sleep.md](deep-sleep.md)).
 ## Recovery
 
 - Card won't boot: pull it (a hung U-Boot only reads the card) and restore `extlinux.conf` in a card reader.
-- SPL: download mode works whatever is on the eMMC; write `stock_boot0.bak` back to `splloader`.
+- SPL: download mode works whatever is on the eMMC; see step 1, Undo.
 - Android: with no card, the SPL boots the stock U-Boot and Android as before.
