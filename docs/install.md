@@ -93,9 +93,9 @@ There is no backup on this path; the `.pac`'s own SPLLoader puts the original ba
 - Linux: `./flash-spl.sh YOUR.pac splloader-backup-<date>.bin`.
 - Windows: as above, leaving SPLLoader's file as the `.pac`'s.
 
-What we tested: the USB write of `splloader` with readback, by hand with the same `spd_dump` commands
-`flash-spl.sh` runs. The adb path and the scripts themselves are not yet tested on a unit; the Windows path
-is not tested.
+What we tested: `flash-spl.sh` on our dev unit (stock `.pac` v1.44 loaders, backup, write, readback);
+`flash-spl-android.sh` on a GammaOS Next Lite unit (Android 14), after which it booted GammaOS with no card
+and base618 from a card. The Windows path is not tested.
 
 ## 2. U-Boot (SD p1)
 
