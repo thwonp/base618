@@ -56,13 +56,14 @@ backup. Power off, put in a base618 card, power on.
 
 ### From a Linux PC over USB - whatever the unit runs, or if it boots nothing
 
-Needs [spd_dump](https://github.com/TomKing062/spreadtrum_flash) (`make`, then on `PATH`) and a Unisoc `.pac`
-for the RG Rotate - the stock firmware or GammaOS's (both linked from
-[GammaOS's install page](https://github.com/TheGammaSqueeze/GammaOSNext/wiki/GammaOS-Next-Installation)).
-Only its two download-mode loaders are used; nothing else in it is written.
+Needs [spd_dump](https://github.com/TomKing062/spreadtrum_flash) (`make`, then on `PATH`) and the RG Rotate's
+two download-mode loaders. The easiest source is `spl-flasher.zip` from
+[beebono's ROCKNIX-T618 release](https://github.com/beebono/distribution/releases/tag/beta-20260818): unzip it
+and point the script at its folder. Only its `fdl1-dl.bin` and `fdl2-dl.bin` are used (byte for byte the
+loaders in the stock v1.44 `.pac`). A stock or GammaOS `.pac` works too; again only its two loaders are used.
 
 ```sh
-./flash-spl.sh YOUR.pac
+./flash-spl.sh path/to/spl-flasher     # or: ./flash-spl.sh YOUR.pac
 ```
 
 Then: unplug the unit, power it off, slide the screen open, hold Home/Back (front, between the sticks) and plug
@@ -76,7 +77,8 @@ SUBSYSTEM=="usb", ATTR{idVendor}=="1782", ATTR{idProduct}=="4d00", MODE="0666", 
 
 GammaOS's tools, used the way its wiki's "Super only" recovery uses them. From
 [GammaOS's install page](https://github.com/TheGammaSqueeze/GammaOSNext/wiki/GammaOS-Next-Installation): get
-`UnisocTools_RG_ROTATE.zip` (install its drivers, `UnisocDrivers/DPInst64.exe`) and the stock or GammaOS `.pac`.
+`UnisocTools_RG_ROTATE.zip` (install its drivers, `UnisocDrivers/DPInst64.exe`). This path needs a whole `.pac`:
+the stock firmware or GammaOS's (GammaOS's is for its Patreon supporters).
 
 1. Run `ResearchDownload.exe`, **Load Packet**, pick the `.pac`.
 2. Gear icon, Main Page: untick **Select All Files**, tick only **FDL**, **FDL2** and **SPLLoader**; set
@@ -90,7 +92,7 @@ There is no backup on this path; the `.pac`'s own SPLLoader puts the original ba
 
 - adb: `adb push splloader.bin /data/local/tmp/` (from the pulled backup), then
   `adb shell sh /data/local/tmp/flash-spl-android.sh /data/local/tmp/splloader.bin`.
-- Linux: `./flash-spl.sh YOUR.pac splloader-backup-<date>.bin`.
+- Linux: `./flash-spl.sh path/to/spl-flasher splloader-backup-<date>.bin` (or `YOUR.pac` in place of the folder).
 - Windows: as above, leaving SPLLoader's file as the `.pac`'s.
 
 What we tested: `flash-spl.sh` on our dev unit (stock `.pac` v1.44 loaders, backup, write, readback);

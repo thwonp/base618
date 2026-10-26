@@ -3,10 +3,13 @@
 # base618's SPL into the eMMC splloader slot (boot0) over USB, from a Linux PC - the unit
 # can be on anything, or boot nothing.
 #
-#   scripts/flash-spl.sh PAC [SPL]
+#   scripts/flash-spl.sh LOADERS [SPL]
 #
-#   PAC   the unit's stock firmware .pac or GammaOS's: only its two download-mode loaders
-#         (FDL1, FDL2) are used, taken out with pac-fdl.py; nothing else of it is written.
+#   LOADERS  the unit's two download-mode loaders (FDL1, FDL2), from either
+#            - a folder holding fdl1-dl.bin and fdl2-dl.bin, e.g. spl-flasher/ from
+#              spl-flasher.zip at https://github.com/beebono/distribution/releases, or
+#            - the stock firmware .pac or GammaOS's, taken out with pac-fdl.py.
+#            Nothing else of either is written.
 #   SPL   default spl-cm4.img next to this script (as in the release's spl zip).
 #
 # Needs spd_dump (https://github.com/TomKing062/spreadtrum_flash, `make`) on PATH or as
@@ -16,7 +19,7 @@
 # falls back to it and the unit boots as it did before.
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
-PAC=${1:?usage: flash-spl.sh PAC [SPL]}
+SRC=${1:?usage: flash-spl.sh LOADERS [SPL]}
 SPL=${2:-$HERE/spl-cm4.img}
 SPD=${SPD_DUMP:-spd_dump}
 say() { echo "flash-spl: $*"; }
@@ -27,7 +30,12 @@ command -v "$SPD" > /dev/null || die "need spd_dump (or SPD_DUMP=path)"
 python3 "$HERE/check-dhtb.py" "$SPL" > /dev/null || die "$SPL fails its DHTB check"
 T=$(mktemp -d "${TMPDIR:-/var/tmp}/flash-spl.XXXXXX")
 trap 'rm -rf "$T"' EXIT
-python3 "$HERE/pac-fdl.py" "$PAC" "$T"
+if [ -d "$SRC" ]; then
+	cp "$SRC/fdl1-dl.bin" "$T/fdl1.bin" && cp "$SRC/fdl2-dl.bin" "$T/fdl2.bin" \
+		|| die "$SRC has no fdl1-dl.bin and fdl2-dl.bin"
+else
+	python3 "$HERE/pac-fdl.py" "$SRC" "$T"
+fi
 BAK=splloader-backup-$(date +%Y%m%d-%H%M%S).bin
 [ -e "$BAK" ] && die "$BAK exists"
 
