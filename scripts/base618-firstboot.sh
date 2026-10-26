@@ -29,6 +29,17 @@ fail() {
 
 screen "base618: setting up this unit's firmware..." "" "Please wait, do not turn it off."
 udevadm settle -t 30
+# Armbian's resize (ordered before this service) gives the grown root partition a
+# new PARTUUID; the base618 label boots root=PARTUUID= (no initramfs to find a
+# UUID), so point it at the partition as it is now - else the next boot waits forever.
+ROOT=$(findmnt -no SOURCE /)
+PU=$(blkid -p -s PART_ENTRY_UUID -o value "$ROOT")
+if [ -n "$PU" ]; then
+	sed -i "/^label base618/,/^label /s/root=PARTUUID=[^ ]*/root=PARTUUID=$PU/" "$BOOT/extlinux/extlinux.conf"
+	sync
+fi
+grep -q "root=PARTUUID=$PU " "$BOOT/extlinux/extlinux.conf" 2>/dev/null ||
+	log "WARNING: could not set root=PARTUUID=$PU in $BOOT/extlinux/extlinux.conf - the next boot may not find root"
 sh "$HERE/extract-firmware.sh" / || fail "extract-firmware.sh found no valid image (see the journal)"
 sh "$HERE/make-initrd-fw.sh" / "$BOOT/initrd-fw.cpio.gz" || fail "could not write $BOOT/initrd-fw.cpio.gz"
 depmod -a "$(uname -r)" || log "depmod failed; the updated modules may not load"

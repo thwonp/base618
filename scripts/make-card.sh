@@ -32,6 +32,7 @@
 # sha256sum. Space: about twice the image (2.2 GB).
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
+RES=$HERE/../res
 ASSETS=${1:?usage: make-card.sh FILES_DIR OUT}
 OUT=${2:?usage: make-card.sh FILES_DIR OUT}
 ROOT_PASSWORD=${ROOT_PASSWORD:-base618}
@@ -62,7 +63,8 @@ if [ "$GOT" != "$WANT" ]; then
 fi
 # 2. The base618 parts.
 ( cd "$ASSETS" && sha256sum -c --ignore-missing --quiet SHA256SUMS ) || die "$ASSETS does not match its SHA256SUMS"
-for f in uboot_dhtb.img Image.uimg ums512-rg-rotate.dtb modules-updates-$KREL.tar.gz pm_bootcode.bin; do
+for f in uboot_dhtb.img Image.uimg ums512-rg-rotate.dtb modules-updates-$KREL.tar.gz pm_bootcode.bin \
+         base618-screen base618-power; do
 	[ -s "$ASSETS/$f" ] || die "no $ASSETS/$f"
 done
 python3 "$HERE/check-dhtb.py" "$ASSETS/uboot_dhtb.img" > /dev/null || die "uboot_dhtb.img fails its DHTB check"
@@ -87,12 +89,14 @@ dd if="$ASSETS/uboot_dhtb.img" of="$OUT" bs=512 seek="$P1" conv=notrunc status=n
 # 4. p2: kernel, DTB, initrd stub, extlinux.conf.
 say "p2: kernel, DTB, initrd stub, extlinux (root=PARTUUID=$P3UUID)"
 B="$OUT@@$((P2 * 512))"
-python3 - "$ASSETS/pm_bootcode.bin" "$T/initrd-fw.cpio" << 'PY'
+python3 - "$ASSETS/pm_bootcode.bin" "$T/initrd-fw.cpio" "$RES/boot-logo.ppm" << 'PY'
 # newc by hand: a /dev/console node needs root to make on disk, not in an archive.
 import sys
 code = open(sys.argv[1], 'rb').read()
+logo = open(sys.argv[3], 'rb').read()
 ents = [('dev', 0o040755, b''), ('dev/console', 0o020600, b''), ('lib', 0o040755, b''),
-        ('lib/firmware', 0o040755, b''), ('lib/firmware/sprd', 0o040755, b''),
+        ('lib/firmware', 0o040755, b''), ('lib/firmware/boot-logo.ppm', 0o100644, logo),
+        ('lib/firmware/sprd', 0o040755, b''),
         ('lib/firmware/sprd/pm_bootcode.bin', 0o100644, code), ('TRAILER!!!', 0, b'')]
 out = bytearray()
 for ino, (name, mode, data) in enumerate(ents, 1):
@@ -115,7 +119,7 @@ grep -q '^label base618' "$T/extlinux.armbian" && die "$IN already has a base618
 	echo "  kernel /Image.uimg"
 	echo "  initrd /initrd-fw.cpio.gz"
 	echo "  fdt /dtb/base618/ums512-rg-rotate.dtb"
-	echo "  append root=PARTUUID=$P3UUID rootwait ro console=tty0 loglevel=1 log_buf_len=8M no_console_suspend consoleblank=0 net.ifnames=0"
+	echo "  append root=PARTUUID=$P3UUID rootwait ro console=tty0 quiet loglevel=1 systemd.show_status=false vt.global_cursor_default=0 fbcon=logo-pos:center,logo-count:1,rotate:\${plorpos_fbrot} log_buf_len=8M no_console_suspend consoleblank=0 net.ifnames=0"
 	echo
 	cat "$T/extlinux.armbian"
 } > "$T/extlinux.conf"
@@ -126,7 +130,7 @@ mcopy -o -i "$B" "$T/initrd-fw.cpio.gz" ::/initrd-fw.cpio.gz
 mcopy -o -i "$B" "$T/extlinux.conf" ::/extlinux/extlinux.conf
 
 # 5. p3: the rootfs, edited in place with debugfs on a copy, then written back.
-say "p3: modules, first-boot service, root password"
+say "p3: modules, first-boot service, screen + power key, root password"
 R=$T/p3.img
 dd if="$OUT" of="$R" bs=512 skip="$P3" count="$P3N" status=none
 mkdir "$T/mod" && tar -C "$T/mod" -xzf "$ASSETS/modules-updates-$KREL.tar.gz"
@@ -155,8 +159,28 @@ SHADOW_GID=$(debugfs -R "stat /etc/shadow" "$R" 2> /dev/null | sed -n 's/.*Group
 	echo "write $HERE/base618-firstboot.service base618-firstboot.service"
 	echo "sif base618-firstboot.service mode 0100644"; echo "sif base618-firstboot.service uid 0"
 	echo "sif base618-firstboot.service gid 0"
+	echo "cd /usr/lib/firmware"; echo "write $RES/boot-logo.ppm boot-logo.ppm"
+	echo "sif boot-logo.ppm mode 0100644"; echo "sif boot-logo.ppm uid 0"; echo "sif boot-logo.ppm gid 0"
+	echo "cd /usr/share/base618"; echo "write $RES/screen.pgm screen.pgm"
+	echo "sif screen.pgm mode 0100644"; echo "sif screen.pgm uid 0"; echo "sif screen.pgm gid 0"
+	echo "cd /usr/local/bin"
+	for n in base618-screen base618-power; do
+		echo "write $ASSETS/$n $n"; echo "sif $n mode 0100755"; echo "sif $n uid 0"; echo "sif $n gid 0"
+	done
+	echo "cd /etc/systemd/system"
+	for n in base618-screen.service base618-power.service; do
+		echo "write $HERE/$n $n"; echo "sif $n mode 0100644"; echo "sif $n uid 0"; echo "sif $n gid 0"
+	done
+	# The panel shows base618-screen, not a text login; Armbian's USB serial login stays.
+	echo "rm getty.target.wants/getty@tty1.service"
+	echo "symlink getty@tty1.service /dev/null"
+	echo "mkdir /etc/systemd/logind.conf.d"; echo "cd /etc/systemd/logind.conf.d"
+	echo "write $HERE/base618-power-logind.conf base618-power.conf"
+	echo "sif base618-power.conf mode 0100644"; echo "sif base618-power.conf uid 0"; echo "sif base618-power.conf gid 0"
 	echo "cd /etc/systemd/system/multi-user.target.wants"
-	echo "symlink base618-firstboot.service /etc/systemd/system/base618-firstboot.service"
+	for n in base618-firstboot base618-screen base618-power; do
+		echo "symlink $n.service /etc/systemd/system/$n.service"
+	done
 } > "$T/debugfs.cmds"
 debugfs -w -f "$T/debugfs.cmds" "$R" > "$T/debugfs.log" 2>&1
 # It echoes each command ("debugfs: ...") and an inode per write; anything else is an error.
@@ -178,6 +202,11 @@ dd if="$OUT" of="$R" bs=512 skip="$P3" count="$P3N" status=none
 for f in /usr/share/base618/firstboot.sh /usr/share/base618/extract-firmware.sh \
          /usr/share/base618/make-initrd-fw.sh /usr/lib/firmware/sprd/pm_bootcode.bin \
          /etc/systemd/system/multi-user.target.wants/base618-firstboot.service \
+         /etc/systemd/system/multi-user.target.wants/base618-screen.service \
+         /etc/systemd/system/multi-user.target.wants/base618-power.service \
+         /etc/systemd/system/getty.target.wants/serial-getty@ttyGS0.service \
+         /etc/systemd/logind.conf.d/base618-power.conf /usr/local/bin/base618-power \
+         /usr/local/bin/base618-screen /usr/share/base618/screen.pgm /usr/lib/firmware/boot-logo.ppm \
          /usr/lib/modules/$KREL/updates/btsprdsdio.ko; do
 	debugfs -R "stat $f" "$R" 2>&1 | grep -q '^Inode:' || die "p3 has no $f"
 done

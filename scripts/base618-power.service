@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MIT
+# The power key (src/base618-power.c): tap = suspend, hold 3 s = power off with
+# the orbs. Independent of base618-screen; keep it under any frontend that does
+# not handle the key itself.
+[Unit]
+Description=base618 power key: tap to suspend, hold to power off
+
+[Service]
+ExecStart=/usr/local/bin/base618-power
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

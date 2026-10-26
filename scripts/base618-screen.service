@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MIT
+# The "no CFW installed" screen (src/base618-screen.c). A frontend replaces it:
+# systemctl disable --now base618-screen
+[Unit]
+Description=base618 screen: no CFW installed
+After=systemd-user-sessions.service base618-firstboot.service
+
+[Service]
+ExecStart=/usr/local/bin/base618-screen
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
