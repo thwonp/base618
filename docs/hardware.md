@@ -31,4 +31,7 @@ analog side on (~3 mA asleep).
 ## USB DAC / headsets
 
 Work as standard USB audio class devices in host mode. Unplugging during playback needed a musb fix (freeze);
-suspend with a DAC attached needs the musb PM notifier to drop the host role first.
+suspend with a DAC attached needs the musb PM notifier to drop the host role first. Stopping a DAC's stream
+hit a BUG_ON in sprd_dma.c (a TX channel still busy when the next URB started) and panicked the kernel - at
+boot with one attached, a bootloop: the busy channel is now aborted (2d9b47356). And the charger's boost stayed
+on through power-off, so the PMIC saw VBUS and powered back on: boost off at shutdown (fedeb60b6).

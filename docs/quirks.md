@@ -12,6 +12,8 @@ Each of these cost at least a day.
 - **Headphone volume inverted** (HPL/HPR), reset on every PCM open: re-seed it after each open.
 - **USB DAC unplug froze the device** (musb) and **suspend with a DAC** needs the host role dropped first.
 - **Charging after OTG** stopped until the bq2415x defaults were restored (vbus_disable).
+- **A USB DAC's stream stop panicked the kernel** (musb sprd_dma BUG_ON, channel still busy): abort it instead.
+- **Power-off with a USB device attached rebooted**: the charger's boost kept VBUS up; turn boost off at shutdown.
 - **Boot stall**: ums512 clock probes power-cycled the PMU domain per clock (msleep 50 each way) - hold a runtime
   PM reference during the probe. Kernel boot 4.9 -> 2.0 s.
 - **Display**: reading the DPU/IOMMU while the output is off hangs the bus. Resume needed IOMMU restore and DPU
