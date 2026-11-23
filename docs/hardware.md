@@ -9,7 +9,7 @@ Mainline 7.2 kernel + Armbian's sprd patches + base618's fixes (`rotate-fixes`).
 | Display | 720x720 DSI panel | sprd DRM (DPU) | backlight black at <= 80, a dead zone ~90-170; the swivel (hall) rotates it 90 degrees |
 | Touch | Goodix GT911 | goodix (I2C), evdev | coordinates are raw panel axes: map them through the current rotation yourself |
 | Buttons | d-pad, ABXY, L/R 1-2, Start/Select, Home/Back, side key (BTN_THUMBR), Menu | gpio-keys "gpio-keys-gamepad" | POWER and the volume keys are on the system key node |
-| Hall | swivel open/closed | SW_LID (1 = closed) | closed = rotate the picture 90 degrees |
+| Hall | swivel open/closed | SW_LID (1 = closed), eic-async 15 (pad SPI2_DI, func2) | closed = rotate the picture 90 degrees; opening wakes from deep sleep, closing does not |
 | Audio | SC2730 PMIC codec + speaker amp, AGDSP | sprd ASoC (VBC, MCDT, DSP) | first PCM open after the sound server starts stalls (warm it up); the HPL/HPR volume is inverted and must be re-seeded on every PCM open; mic = mono on channel 1 (channel 0 is an unfed ADC pinned at -32768) |
 | Wi-Fi + BT | Unisoc UWE5622 (marlin3) over SDIO | sc23xx wlan, btsprdsdio, sprd_wcn | firmware from the stock eMMC; see quirks for the connect wedge and BT power-off |
 | USB | USB-C, musb OTG | musb-sprd, bq2415x charger | host mode for USB DACs/pads; after OTG the charger must have its defaults restored (vbus_disable) |

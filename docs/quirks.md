@@ -14,6 +14,11 @@ Each of these cost at least a day.
 - **Charging after OTG** stopped until the bq2415x defaults were restored (vbus_disable).
 - **A USB DAC's stream stop panicked the kernel** (musb sprd_dma BUG_ON, channel still busy): abort it instead.
 - **Power-off with a USB device attached rebooted**: the charger's boost kept VBUS up; turn boost off at shutdown.
+- **Opening the swivel did not wake from deep sleep**: the hall was on `ap_gpio 54` (pad SPI2_DI, func4), and
+  the AP GPIO block cannot wake the SoC - it only latches the edge, handled after the power key wakes it (so
+  `pm_wakeup_irq` still names the hall). Stock has the same pad in func2, on `eic-async` 15, the always-on EIC
+  that does wake it. The pad also needs its AP-sleep input on. U-Boot sets this pad back to func4 (and a sleep
+  pull-up) for its own boot-logo read; the DT sets func2 and no sleep pull.
 - **Boot stall**: ums512 clock probes power-cycled the PMU domain per clock (msleep 50 each way) - hold a runtime
   PM reference during the probe. Kernel boot 4.9 -> 2.0 s.
 - **Display**: reading the DPU/IOMMU while the output is off hangs the bus. Resume needed IOMMU restore and DPU
